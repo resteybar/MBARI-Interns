@@ -66,142 +66,137 @@
 using namespace std;
 #define DEBUG
 
-int main(const int argc, const char** argv) {
+string getmyXML(string descrip, uint fnum);
 
-	#ifdef DEBUG
+int main(const int argc, const char** argv) {
+    
+#ifdef DEBUG
     PauseWaiter pause;
     setPause(true);
-    #endif
-
-	// View Class Passed
-	string className = ">Class Name<";
-
-	DetectionParameters dp = DetectionParametersSingleton::instance()->itsParameters;
-
-	ModelManager manager("Read .xml Files");
-
-
-	cout << "LINFO: ";
-	LINFO("THIS IS LINFO");
-	cout << endl;
-//	cout << "LDEBUG: ";
-//	cout << endl;
-//	LFATAL("THIS IS LFATAL");
-
-	nub::soft_ref<OutputFrameSeries> ofs(new OutputFrameSeries(manager));
-	manager.addSubComponent(ofs);
-
-	nub::soft_ref<InputFrameSeries> ifs(new InputFrameSeries(manager));
-	manager.addSubComponent(ifs);
-
-
-
+#endif
+    
+    // View Class Passed
+    string className = ">Class Name<";
+    
+    DetectionParameters dp = DetectionParametersSingleton::instance()->itsParameters;
+    
+    ModelManager manager("Read .xml Files");
+    
+    cout << "LINFO: ";
+    LINFO("THIS IS LINFO");
+    cout << endl;
+    //    cout << "LDEBUG: ";
+    //    cout << endl;
+    //    LFATAL("THIS IS LFATAL");
+    
+    nub::soft_ref<OutputFrameSeries> ofs(new OutputFrameSeries(manager));
+    manager.addSubComponent(ofs);
+    
+    nub::soft_ref<InputFrameSeries> ifs(new InputFrameSeries(manager));
+    manager.addSubComponent(ifs);
+    
     // parse the command line
     if (manager.parseCommandLine(argc, argv, "", 0, -1) == NULL)
-        LFATAL("Invalid command line argument. Aborting program now !");
-
+    LFATAL("Invalid command line argument. Aborting program now !");
+    
     // start all the ModelComponents
     manager.start();
-
+    
     bool singleFrame = false;
     int numSpots = 0;
     uint frameNum = 0;
     Image< PixRGB<byte> > inputRaw, inputScaled;
-
+    
     while(1)
-      	  {
-         // read new image in?
-         FrameState is = FRAME_NEXT;
-
-         if (!singleFrame)
-            is = ifs->updateNext();
-         else
-            is = FRAME_FINAL;
-
-         if (is == FRAME_COMPLETE) break; // done
-         if (is == FRAME_NEXT || is == FRAME_FINAL) // new frame
-         {
+    {
+        // read new image in?
+        FrameState is = FRAME_NEXT;
+        
+        if (!singleFrame)
+        is = ifs->updateNext();
+        else
+        is = FRAME_FINAL;
+        
+        if (is == FRAME_COMPLETE) break; // done
+        if (is == FRAME_NEXT || is == FRAME_FINAL) // new frame
+        {
             LINFO("Reading new frame");
-
+            
             // Output Frame #
-            //	____________
-
-//            numSpots = 0;
-			// cache image
-			inputRaw = ifs->readRGB();
-//			inputScaled = rescale(inputRaw, scaledDims);
-
-			frameNum = ifs->frame();
-
-			// Getting filename
-			string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
-			LINFO(description.c_str()); //Prints what's in description:
-			vector<string>image_path;
-
-			boost::split(image_path, description, boost::is_any_of("/"));
-//			for(int i=0; i<image_path.size(); i++){
-//				cout << image_path[i] << " ";
-//			}
-
-			vector<string>filename;
-			boost::split(filename, image_path[image_path.size()-1], boost::is_any_of("#"));
-
-//			for(int i=0; i<strs2.size(); i++){
-//				cout << strs2[i] << endl;
-//			}
-			string fs = sformat("%s%06d.xml", filename[0].c_str() , frameNum);
-
-			string xml_path="";
-			for(int i=1; i< image_path.size()-1; i++){
-				xml_path.append(image_path[i]);
-				xml_path.append("/");
-			}
-			xml_path.append(fs);
-			cout << "My new path: " << xml_path << endl;
-			#ifdef DEBUG
-			if ( pause.checkPause()) Raster::waitForKey();// || ifs->shouldWait() || ofs->shouldWait()) Raster::waitForKey();
-			#endif
-         }
+            //    ____________
+            //            numSpots = 0;
+            // cache image
+            inputRaw = ifs->readRGB();
+            //            inputScaled = rescale(inputRaw, scaledDims);
+            
+            frameNum = ifs->frame();
+            
+            // Getting filename
+            string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
+            
+            cout << "My new path: " << getmyXML(description, frameNum)<< endl;
+#ifdef DEBUG
+            if ( pause.checkPause()) Raster::waitForKey();// || ifs->shouldWait() || ofs->shouldWait()) Raster::waitForKey();
+#endif
         }
-
-    	manager.stop();
+    }
+    
+    manager.stop();
     // initialize the visual event set
-//    VisualEventSet eventSet(dp, manager.getExtraArg(0));
-
-//    cout << "Passed " << className << endl;
-
+    //    VisualEventSet eventSet(dp, manager.getExtraArg(0));
+    
+    //    cout << "Passed " << className << endl;
+    
     // Initialize bayesian network (Have our own classfifer: called whatever, may not pass anything to it struturely = good)
-//         BayesClassifier bayesClassifier(dp.itsBayesPath, dp.itsFeatureType, scaledDims);
-//         FeatureCollection features(scaledDims);
-
-//       // No features - But have all that ^
-
-
-//         // 	1) Read XML
-
-
-
-//         // Be used to save img, display - by frame, put point on img
-//         // 	- Don't worry about img. name
-//         nub::soft_ref<MbariResultViewer> rv(new MbariResultViewer(manager));
-//         manager.addSubComponent(rv);
-
-//         // Tracker should be working
-//         // 	1) Take Box
-//         //	2) Run box & run obj. detection
-//         // 	3) Init. event in Linux Frame
-
-//         // while() {
-
-//         	// Read in Pic.
-// 			inputRaw = ifs->readRGB();
-// 			inputScaled = rescale(inputRaw, scaledDims);
-
-
-// 			objs = objdet->run(rv, winlist, segmentIn); // (rv, "list of boxes", Frame) - Run obj det. w/ that, w/ every frame
-// 			// create new events with this
-// 			eventSet.initiateEvents(objs, features, imgData);
-//         // }
-
+    //         BayesClassifier bayesClassifier(dp.itsBayesPath, dp.itsFeatureType, scaledDims);
+    //         FeatureCollection features(scaledDims);
+    
+    //       // No features - But have all that ^
+    
+    
+    //         //     1) Read XML
+    
+    
+    
+    //         // Be used to save img, display - by frame, put point on img
+    //         //     - Don't worry about img. name
+    //         nub::soft_ref<MbariResultViewer> rv(new MbariResultViewer(manager));
+    //         manager.addSubComponent(rv);
+    
+    //         // Tracker should be working
+    //         //     1) Take Box
+    //         //    2) Run box & run obj. detection
+    //         //     3) Init. event in Linux Frame
+    
+    //         // while() {
+    
+    //             // Read in Pic.
+    //             inputRaw = ifs->readRGB();
+    //             inputScaled = rescale(inputRaw, scaledDims);
+    
+    
+    //             objs = objdet->run(rv, winlist, segmentIn); // (rv, "list of boxes", Frame) - Run obj det. w/ that, w/ every frame
+    //             // create new events with this
+    //             eventSet.initiateEvents(objs, features, imgData);
+    //         // }
+    
     return 0;
+}
+string getmyXML(string descrip, uint fnum){
+    vector<string>image_path;
+    
+    boost::split(image_path, descrip, boost::is_any_of("/"));
+    
+    vector<string>filename;
+    boost::split(filename, image_path[image_path.size()-1], boost::is_any_of("#"));
+    
+    string fs = sformat("%s%06d.xml", filename[0].c_str() , fnum);
+    
+    string xml_path="";
+    for(int i=1; i< image_path.size()-1; i++){
+        xml_path.append(image_path[i]);
+        xml_path.append("/");
+    }
+    xml_path.append(fs);
+    return xml_path;
 }
