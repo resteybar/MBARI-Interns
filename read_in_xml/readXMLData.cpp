@@ -6,6 +6,7 @@
 // Description : Hello World in C, Ansi-style
 //============================================================================
 
+#include <vector>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -19,21 +20,16 @@
 using namespace std;
 using namespace xercesc;
 
-int main(void) {
-//	XercesDOMParser parser;
-
-	cout << "Reached BEFORE STRING" << endl;
-
-	string inputXML = "/Users/Gray/Documents/MBARI/avedac-mbarivision/data/f001211.xml";
-
-	cout << "Reached AFTER STRING" << endl;
-
-	// DOM parser instance
-	cout << "Reached BEFORE PARSER" << endl;
-
-	XercesDOMParser *itsParser;
+int main() {
 
 	XMLPlatformUtils::Initialize();
+
+	string inputXML = "/Users/Gray/eclipse-workspace/readXMLData/f001211.xml";
+
+	// Variables Utilized
+	XercesDOMParser *itsParser = NULL; // Opens
+	DOMDocument *domDocParser = NULL;
+	DOMNodeList *list = NULL;
 
 	try {
 		itsParser = new XercesDOMParser;
@@ -41,31 +37,43 @@ int main(void) {
 		cout << "Caught Exception\n";
 	}
 	cout << "Reached AFTER PARSER" << endl;
-  /*itsParser->setDoNamespaces(true);
-  itsParser->setDoSchema(true);
-  itsParser->setValidationScheme(XercesDOMParser::Val_Always);
-  itsParser->setExternalNoNamespaceSchemaLocation(inputSchema.c_str());
-  */
 
-  // Error handler instance for the parser
-//ErrReporter itsErrHandler = new ErrReporter();
-//  itsParser->setErrorHandler(itsErrHandler);
 
-//	itsParser->resetDocumentPool();
-//	itsParser->parse(inputXML.c_str());
-//
-//	if (itsParser->getErrorCount() == 0) {
-//	  xercesc::DOMDocument *domDocParser = itsParser->getDocument();
-//	}
-//	else {
-//	  cout << "Error when attempting to parse the XML file : " << inputXML.c_str() << endl;
-//	  return -1;
-//	}
+	itsParser->resetDocumentPool();
+
+	itsParser->parse(inputXML.c_str()); // Ensures the file is readable
+
+	vector<DOMNode*> nodes;
+
+	if (itsParser->getErrorCount() == 0) {
+
+		cout << "XML = Good\n";
+
+		domDocParser = itsParser->getDocument();
+
+		// How many instances of the '<tag>' found
+		XMLCh *source = XMLString::transcode("object"); 		// Tag wanted
+		list = domDocParser->getElementsByTagName(source);		// Returns list of '<tag>' found
+		cout << "Tags Found: " << list->getLength() << endl;	// How many <tags> found
+
+		// Grab item
+		for(int i = 0; i < list->getLength(); ++i)
+			nodes.push_back(list->item(i));
+
+		cout << "Nodes Size: " << nodes.size() << endl;
+
+		// Get Values
+		DOMNodeList *list = nodes[0]->getChildNodes();
+		cout << list->getLength() << endl;
+		cout << *list->item(0)->getNodeName() << endl;
+
+	} else {
+	  cout << "Error when attempting to parse the XML file : " << inputXML.c_str() << endl;
+	  return -1;
+	}
 
 
 	cout << "Reached END" << endl;
-
-//	parser.parse("/Users/Gray/Documents/MBARI/avedac-mbarivision/data/f001211.xml");
 
 	delete itsParser;
 
