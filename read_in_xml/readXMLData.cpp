@@ -6,9 +6,12 @@
 // Description : Hello World in C, Ansi-style
 //============================================================================
 
-#include <vector>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <vector>
+#include <string>
+#include <sstream>
 #include <iostream>
 
 #include <xercesc/util/PlatformUtils.hpp>
@@ -20,6 +23,22 @@
 using namespace std;
 using namespace xercesc;
 
+// Object Values
+struct BoundingBox {
+    int xmin;
+    int ymin;
+    int xmax;
+    int ymax;
+};
+
+struct Creature {
+    string name;
+    BoundingBox dim;
+};
+
+// Store's value in temporary Creature object
+void storeValue(Creature& temp, const string& tagName, const string& tagValue);    // Stores tag value in temporary 'Creature' Object
+
 int main() {
 
 	XMLPlatformUtils::Initialize();
@@ -30,130 +49,113 @@ int main() {
 	XercesDOMParser *itsParser = NULL; // Opens
 	DOMDocument *domDocParser = NULL;
 	DOMNodeList *list = NULL;
-
-
+	vector<Creature> creaturesFound;
 
 	try {
 		itsParser = new XercesDOMParser;
 	} catch(const DOMException &err) {
 		cout << "Caught Exception\n";
 	}
-	cout << "Reached AFTER PARSER" << endl;
-
 
 	itsParser->resetDocumentPool();
 
 	itsParser->parse(inputXML.c_str()); // Ensures the file is readable
 
-	vector<DOMNode*> nodes;
-
+	// File is Readable
 	if (itsParser->getErrorCount() == 0) {
-
-		cout << "XML = Good\n";
 
 		domDocParser = itsParser->getDocument();
 
 		// How many instances of the '<tag>' found
 		XMLCh *source = XMLString::transcode("object"); 		// Tag wanted
 		list = domDocParser->getElementsByTagName(source);		// Returns list of '<tag>' found
-		cout << "Tags Found: " << list->getLength() << endl;	// How many <tags> found
+//		cout << "Tags Found: " << list->getLength() << endl;	// How many <tags> found
 
-		// Bounding Box
-		DOMNodeList *bndbox = NULL;
-		XMLCh *srcBndBox = NULL;
-		XMLCh *srcName = NULL;
-
-		srcName = XMLString::transcode("name");
-		srcBndBox = XMLString::transcode("bndbox");
-
+		// Parse through each object to grab values
 		for(int i = 0; i < list->getLength(); ++i) {
 
-			DOMNode *node = list->item(i); // Gets the ith <object>
+			DOMNode *node = list->item(i); 						// Gets the ith <object> in the list
+			DOMNodeList *length = node->getChildNodes(); 		// Lines counted, including: "<object> ... </object>" = 13 lines total
 
-			node->normalize();
+			Creature temp;
 
-			DOMNamedNodeMap *map = node->getAttributes();
-
-			DOMNodeList *length = node->getChildNodes();
-
-
+			// Iterate through ea. <tag> in <object> ... </object> to retrieve values
 			for(int k = 0; k < length->getLength(); ++k) {
 				DOMNode *childNode = length->item(k);
 
-				if(childNode->getNodeType() == DOMNode::ELEMENT_NODE) {
-					char *nodeName = XMLString::transcode(childNode->getNodeName());
-					char *nodeValue = XMLString::transcode(childNode->getTextContent());
-					cout << "Name of Node " << k + 1 << ") " << nodeName << endl;
-					cout << "Name of Prefix:" << k + 1 << ") " << nodeValue << endl;
+				if(childNode->getNodeType() == DOMNode::ELEMENT_NODE) {						// Ensures we found a <tag>
+					string tagNameObj = XMLString::transcode(childNode->getNodeName());		// <Gets Tag Name>
+					string tagValueObj = XMLString::transcode(childNode->getTextContent());	// <tag> Gets Value </tag>
+
+					// Grab Bounding Box Dimensions
+					//	- Otherwise, get the <name>
+					if(tagNameObj == "bndbox") {
+						DOMNodeList *dimensions = childNode->getChildNodes();						// Gets all the <tags> in <bndbox>
+
+						for(int j = 0; j < dimensions->getLength(); ++j) {							// Iterate each for dim. value
+							DOMNode *dim = dimensions->item(j);
+
+							if(dim->getNodeType() == DOMNode::ELEMENT_NODE) {
+								string tagNameBB = XMLString::transcode(dim->getNodeName());		// <Gets Tag Name>
+								string tagValueBB = XMLString::transcode(dim->getTextContent());	// <tag> Gets Value </tag>
+
+								storeValue(temp, tagNameBB, tagValueBB);							// Store the dim values 1 by 1
+							}
+						}
+
+						creaturesFound.push_back(temp);												// Store creature found b/c dim are the last values to collect
+
+						break;
+					} else if(tagNameObj == "name"){
+						storeValue(temp, tagNameObj, tagValueObj);									// Store <name> value
+					}
 				}
 			}
-
-			cout << "\n\n";
-
-
-//			char *nodeValue = XMLString::transcode(length->item(5)->getNodeName());
-
-//			if() {
-//				cout << "Found POSE\n";
-//
-//
-//			}
-
-//			cout << "Node Tag " << i + 1 << ": "<< nodeValue << endl;
-//
-//			cout << "Node Length " << i + 1 << ": "<< length->getLength() << endl << endl;
-
-//			char* object = XMLString::transcode(map->item(2)->getNodeName());
-
-//			cout << "Length of Map " << i + 1 << ": "<< map->getLength() << endl;
-//			cout << "Item " << i + 1 << ": "<< object << endl;
-
-
-
-
-
-
-//			char* object = XMLString::transcode(node->getNodeName());
-
-//			cout << object << endl;
-
-//			DOMNodeList *objectChilds = node->getChildNodes();
-//
-//			cout << "Children: " << objectChilds->getLength() << endl;
-
-//			DOMNode *child = objectChilds->item(0);
-//
-//			char* childVal = XMLString::transcode(child->getNodeName());
-//
-//			cout << "Child Value: " << childVal << endl;
-
-//			char* object = XMLString::transcode(node->getNodeName());
-
-//			cout << "# Name: " << object << endl;
-//			bndbox = domDocParser->getElementsByTagName(srcBndBox);
 		}
-
-//		cout << *list->item(0)->getTextContent() << endl;
-
-//		// Grab item
-//		for(int i = 0; i < list->getLength(); ++i)
-//			nodes.push_back(list->item(i));
-//
-//		cout << "Nodes Size: " << nodes.size() << endl;
-
-		// Get Values
-//		XMLCh *source = XMLString::transcode("name"); 		// Tag wanted
-
-
 	} else {
 	  cout << "Error when attempting to parse the XML file : " << inputXML.c_str() << endl;
 	  return -1;
 	}
 
+	// View creatures found in .xml
+	cout << creaturesFound.size() << endl;
+
+	for(int i = 0; i < creaturesFound.size(); ++i) {
+		cout << i << ")\n";
+		cout << "Name: " << creaturesFound[i].name << endl
+				<< "Dim:\n"
+				<< "\txmin: " << creaturesFound[i].dim.xmin << endl
+				<< "\tymin: " << creaturesFound[i].dim.ymin << endl
+				<< "\txmax: " << creaturesFound[i].dim.xmax << endl
+				<< "\tymax: " << creaturesFound[i].dim.ymax << endl << endl;
+	}
 
 	cout << "Reached END" << endl;
 
 	delete itsParser;
 
 	return EXIT_SUCCESS;
+}
+
+// Stores value in temporary 'Creature' Object
+void storeValue(Creature& temp, const string& tagName, const string& tagValue) {    // Stores value in temporary 'Creature' Object
+	if(tagName == "name") {
+        temp.name = tagValue;
+    } else {
+
+    	// Convert Bounding Box Value from 'string to int'
+    	istringstream is(tagValue);
+    	int dim = 0;
+    	is >> dim;
+
+    	if(tagName == "xmin") {
+			temp.dim.xmin = dim;
+		} else if(tagName == "ymin") {
+			temp.dim.ymin = dim;
+		} else if(tagName == "xmax") {
+			temp.dim.xmax = dim;
+		} else if(tagName == "ymax") {
+			temp.dim.ymax = dim;
+		}
+    }
 }
