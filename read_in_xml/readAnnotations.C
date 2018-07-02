@@ -135,50 +135,13 @@ int main(const int argc, const char** argv) {
             string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
             
             cout << "My new path: " << getmyXML(description, frameNum)<< endl;
-#ifdef DEBUG
+            #ifdef DEBUG
             if ( pause.checkPause()) Raster::waitForKey();// || ifs->shouldWait() || ofs->shouldWait()) Raster::waitForKey();
-#endif
+            #endif
         }
     }
     
     manager.stop();
-    // initialize the visual event set
-    //    VisualEventSet eventSet(dp, manager.getExtraArg(0));
-    
-    //    cout << "Passed " << className << endl;
-    
-    // Initialize bayesian network (Have our own classfifer: called whatever, may not pass anything to it struturely = good)
-    //         BayesClassifier bayesClassifier(dp.itsBayesPath, dp.itsFeatureType, scaledDims);
-    //         FeatureCollection features(scaledDims);
-    
-    //       // No features - But have all that ^
-    
-    
-    //         //     1) Read XML
-    
-    
-    
-    //         // Be used to save img, display - by frame, put point on img
-    //         //     - Don't worry about img. name
-    //         nub::soft_ref<MbariResultViewer> rv(new MbariResultViewer(manager));
-    //         manager.addSubComponent(rv);
-    
-    //         // Tracker should be working
-    //         //     1) Take Box
-    //         //    2) Run box & run obj. detection
-    //         //     3) Init. event in Linux Frame
-    
-    //         // while() {
-    
-    //             // Read in Pic.
-    //             inputRaw = ifs->readRGB();
-    //             inputScaled = rescale(inputRaw, scaledDims);
-    
-    
-    //             objs = objdet->run(rv, winlist, segmentIn); // (rv, "list of boxes", Frame) - Run obj det. w/ that, w/ every frame
-    //             // create new events with this
-    //             eventSet.initiateEvents(objs, features, imgData);
-    //         // }
     
     return 0;
 }
