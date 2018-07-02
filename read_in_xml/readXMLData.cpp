@@ -3,13 +3,13 @@
 // Author      : Raymond Esteybar
 // Version     :
 // Copyright   : Your copyright notice
-// Description : Hello World in C, Ansi-style
+// Description : Parses through .xml to gather the values in <object> for the <name> & <bndbox> dimensions
 //============================================================================
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <vector>
+#include <vector>  // Change into a diff DS or make our own class
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -43,6 +43,7 @@ int main() {
 
 	XMLPlatformUtils::Initialize();
 
+	// Mayra's Code will handle grabbing the files
 	string inputXML = "/Users/Gray/eclipse-workspace/readXMLData/f001211.xml";
 
 	// Variables Utilized
@@ -69,7 +70,6 @@ int main() {
 		// How many instances of the '<tag>' found
 		XMLCh *source = XMLString::transcode("object"); 		// Tag wanted
 		list = domDocParser->getElementsByTagName(source);		// Returns list of '<tag>' found
-//		cout << "Tags Found: " << list->getLength() << endl;	// How many <tags> found
 
 		// Parse through each object to grab values
 		for(int i = 0; i < list->getLength(); ++i) {
