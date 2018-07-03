@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : locateCreatures.C
+// Name        : readXMLData.cpp
 // Author      : Raymond Esteybar
 // Version     :
 // Copyright   : Your copyright notice
@@ -81,10 +81,10 @@
 #include "DetectionAndTracking/DetectionParameters.H"
 #include "Simulation/SimEventQueueConfigurator.H"
 
-#define DEBUG
-
 using namespace std;
 using namespace xercesc;
+
+#define DEBUG
 
 // Object Values
 struct BoundingBox {
@@ -109,41 +109,84 @@ string getmyXML(const string& descrip, const uint& fnum);
 void getObjectValues(XercesDOMParser *itsParser, vector<Creature>& creaturesFound);
 
 
-int main() {
+int main(const int argc, const char** argv) {
+
+	#ifdef DEBUG
+    PauseWaiter pause;
+    setPause(true);
+    #endif
 
 	XMLPlatformUtils::Initialize();
 
-	// Variables Utilized
-	XercesDOMParser *itsParser = NULL; // Opens
+//	// Variables Utilized
+	XercesDOMParser *itsParser = new XercesDOMParser; // Opens
 	vector<Creature> creaturesFound;
 
-	try {
-		itsParser = new XercesDOMParser;
-	} catch(const DOMException &err) {
-		cout << "Caught Exception\n";
-	}
+	DetectionParameters dp = DetectionParametersSingleton::instance()->itsParameters;
+	ModelManager manager("Read .xml Files");
 
+	// 	- View Class Passed
+	string className = ">Class Name<";
 
-	// File is Readable
+	nub::soft_ref<OutputFrameSeries> ofs(new OutputFrameSeries(manager));
+	manager.addSubComponent(ofs);
+
+	nub::soft_ref<InputFrameSeries> ifs(new InputFrameSeries(manager));
+	manager.addSubComponent(ifs);
+//
+
+	if (manager.parseCommandLine(argc, argv, "", 0, -1) == NULL)
+		LFATAL("Invalid command line argument. Aborting program now !");
+
+	manager.start();
+	Dims scaledDims = ifs->peekDims();
+	bool singleFrame = false;
+
+	int numSpots = 0;
+	uint frameNum = 0;
+	Image< PixRGB<byte> > inputRaw, inputScaled;
+
 	while(1) {
 
-		// Mayra's Code will handle grabbing the files
-		string inputXML = "/Users/mochoa/Documents/MBARI/avedac-mbarivision/data/f000004.xml";
+		// Read new image in
+		FrameState is = FRAME_NEXT;
 
-		// Read File
-		itsParser->resetDocumentPool();
-		itsParser->parse(inputXML.c_str()); // Ensures the file is readable
+		if (!singleFrame)
+			is = ifs->updateNext();
+		else
+			is = FRAME_FINAL;
 
-		getFile();
+		if (is == FRAME_COMPLETE )	break; // done
+		if (is == FRAME_NEXT || is == FRAME_FINAL) { // new frame
 
-		if (itsParser->getErrorCount() == 0) {
-			getObjectValues(itsParser, creaturesFound);
+			LINFO("Reading new frame");
 
-		} else {
-		  cout << "Error when attempting to parse the XML file : " << inputXML.c_str() << endl;
-		  return -1;
+			// Get Frame
+			inputRaw = ifs->readRGB();
+			frameNum = ifs->frame();
+			string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
+
+			description = "/" + getmyXML(description, frameNum);
+			cout << "My new path: " << description << endl;
+
+			// Read File
+			itsParser->resetDocumentPool();
+			itsParser->parse(description.c_str()); // Ensures the file is readable
+
+			// 	- Extract Values
+			if (itsParser->getErrorCount() == 0) {
+				getObjectValues(itsParser, creaturesFound);
+			} else {
+			  cout << "Error when attempting to parse the XML file : " << description.c_str() << endl;
+			  return -1;
+			}
+
+			#ifdef DEBUG
+			if ( pause.checkPause()) Raster::waitForKey();// || ifs->shouldWait() || ofs->shouldWait()) Raster::waitForKey();
+			#endif
 		}
 	}
+	manager.stop();
 
 	// View creatures found in .xml
 	cout << creaturesFound.size() << endl;
@@ -160,7 +203,7 @@ int main() {
 
 	cout << "Reached END" << endl;
 
-	delete itsParser;
+//	delete itsParser;
 
 	return EXIT_SUCCESS;
 }
