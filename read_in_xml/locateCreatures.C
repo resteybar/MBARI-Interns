@@ -1,9 +1,10 @@
 //============================================================================
-// Name        : readXMLData.cpp
-// Author      : Raymond Esteybar
+// Name        : locateCreatures.cpp
+// Author      : Mayra Ochoa & Raymond Esteybar
 // Version     :
 // Copyright   : Your copyright notice
-// Description : Parses through .xml to gather the values in <object> for the <name> & <bndbox> dimensions
+// Description : Parses through .xml to gather the values in <object> 
+//		 for the <name> & <bndbox> dimensions
 //============================================================================
 
 #include <stdio.h>
@@ -99,15 +100,10 @@ struct Creature {
     BoundingBox dim;
 };
 
-// Store's value in temporary Creature object
-void storeValue(Creature& temp, const string& tagName, const string& tagValue);    // Stores tag value in temporary 'Creature' Object
-
-// Get .xml in directory
-string getmyXML(const string& descrip, const uint& fnum);
-
-// Reads .xml for values in <object> ... </object>
-void getObjectValues(XercesDOMParser *itsParser, vector<Creature>& creaturesFound);
-
+// Functions
+void storeValue(Creature& temp, const string& tagName, const string& tagValue);    		// Stores tag value in temporary 'Creature' Object
+string getmyXML(const string& descrip, const uint& fnum);								// Get .xml in directory
+void getObjectValues(XercesDOMParser *itsParser, vector<Creature>& creaturesFound); 	// Reads .xml for values in <object> ... </object>
 
 int main(const int argc, const char** argv) {
 
@@ -118,34 +114,31 @@ int main(const int argc, const char** argv) {
 
 	XMLPlatformUtils::Initialize();
 
-//	// Variables Utilized
-	XercesDOMParser *itsParser = new XercesDOMParser; // Opens
-	vector<Creature> creaturesFound;
+	// Variables Utilized
+	XercesDOMParser *itsParser = new XercesDOMParser;	// Ensures File is readable
+	vector<Creature> creaturesFound;					// Store 'Creature' values
 
-	DetectionParameters dp = DetectionParametersSingleton::instance()->itsParameters;
+	bool singleFrame = false;
+	int numSpots = 0;
+	uint frameNum = 0;
+	Image< PixRGB<byte> > inputRaw, inputScaled;
+
 	ModelManager manager("Read .xml Files");
-
-	// 	- View Class Passed
-	string className = ">Class Name<";
+	DetectionParameters dp = DetectionParametersSingleton::instance()->itsParameters;
 
 	nub::soft_ref<OutputFrameSeries> ofs(new OutputFrameSeries(manager));
-	manager.addSubComponent(ofs);
-
 	nub::soft_ref<InputFrameSeries> ifs(new InputFrameSeries(manager));
+
+	manager.addSubComponent(ofs);
 	manager.addSubComponent(ifs);
-//
 
 	if (manager.parseCommandLine(argc, argv, "", 0, -1) == NULL)
 		LFATAL("Invalid command line argument. Aborting program now !");
 
 	manager.start();
 	Dims scaledDims = ifs->peekDims();
-	bool singleFrame = false;
 
-	int numSpots = 0;
-	uint frameNum = 0;
-	Image< PixRGB<byte> > inputRaw, inputScaled;
-
+	// Read all .xml
 	while(1) {
 
 		// Read new image in
@@ -167,7 +160,6 @@ int main(const int argc, const char** argv) {
 			string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
 
 			description = "/" + getmyXML(description, frameNum);
-			cout << "My new path: " << description << endl;
 
 			// Read File
 			itsParser->resetDocumentPool();
@@ -203,7 +195,7 @@ int main(const int argc, const char** argv) {
 
 	cout << "Reached END" << endl;
 
-//	delete itsParser;
+	delete itsParser;
 
 	return EXIT_SUCCESS;
 }
