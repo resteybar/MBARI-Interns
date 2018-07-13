@@ -521,5 +521,8 @@ void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims, 
 				}
 			}
 		}
+
+		if(confidencePer.empty())
+			confidencePer.push_back(1);
 	}
 }
