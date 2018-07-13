@@ -4,7 +4,7 @@
 // Version     :
 // Copyright   : Your copyright notice
 // Description : Parses through .xml to gather the values in <object>
-//		 for the <name> & <bndbox> dimensions
+//		 		 for the <name> & <bndbox> dimensions
 //============================================================================
 
 #include <stdio.h>
@@ -99,7 +99,7 @@ struct BoundingBox {
 // Functions
 void storeValue(BoundingBox& temp, const string& tagName, const string& tagValue);    		// Stores tag value in temporary 'Creature' Object
 string getmyXML(const string& descrip, const uint& fnum);								// Get .xml in directory
-void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims); 	// Reads .xml for values in <object> ... </object>
+void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims, list<double>& confidencePer); 	// Reads .xml for values in <object> ... </object>
 
 int main(const int argc, const char** argv) {
 
@@ -319,6 +319,7 @@ int main(const int argc, const char** argv) {
 		}
 		std::list<Rectangle> reclist;
 		std::list<BitObject> objs;
+		std::list<double> confidencePer;
 
 		// Read File - get list<Rectangle>
 		string description(manager.getOptionValString(&OPT_InputFrameSource).c_str());
@@ -329,7 +330,7 @@ int main(const int argc, const char** argv) {
 
 		// 	- Extract Values
 		if (itsParser->getErrorCount() == 0) {
-			getObjectValues(itsParser, reclist);
+			getObjectValues(itsParser, reclist, confidencePer);
 		} else {
 		  cout << "Error when attempting to parse the XML file : " << description.c_str() << endl;
 		  return -1;
@@ -347,6 +348,15 @@ int main(const int argc, const char** argv) {
 
 		// View creatures found in .xml
 		cout << "Size: " << reclist.size() << endl;
+
+		// ##### OUTPUT CONFIDENCE LEVEL
+
+		std::list<double>::iterator it;
+		cout << "List Size: " << confidencePer.size() << endl;
+		if(!confidencePer.empty())
+			cout << " ########## " << "Confidence Per: %" << confidencePer.front() << " ########## "<< endl;
+
+		// #####
 
 		LINFO("START > objdet->run() <");
 		objs = objdet->run(rv, reclist, segmentIn);
@@ -457,7 +467,7 @@ string getmyXML(const string& descrip, const uint& fnum){
 }
 
 // 	- Reads .xml for values in <object> ... </object>
-void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims) {
+void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims, list<double>& confidencePer) {
 	DOMNodeList *list = NULL;
 	DOMDocument *domDocParser = itsParser->getDocument();
 
@@ -500,6 +510,14 @@ void getObjectValues(XercesDOMParser *itsParser, list<Rectangle>& creatureDims) 
 					creatureDims.push_back(Rectangle::tlbrI(temp.xmin, temp.ymin, temp.xmax, temp.ymax));	// Store creature found b/c dim are the last values to collect
 
 					break;
+				} else if(tagNameObj == "confidence") {
+
+					// Convert Confidence value from 'string to int'
+					istringstream is(tagValueObj);
+					double dim = 0;
+					is >> dim;
+
+					confidencePer.push_back(dim);
 				}
 			}
 		}
